@@ -1,0 +1,16 @@
+// AFN
+digraph {
+	rankdir=LR
+	label="Minimized FDA"
+	1616122953008 [label=Q0 shape=circle]
+	1616122952432 [label=Q2 shape=circle]
+	1616122953536 [label=Q1 shape=circle]
+	1616122953584 [label=Q3 shape=circle]
+	1616122952528 [label=Q4 shape=doublecircle]
+	1616122952528 -> 1616122952528 [label=c]
+	1616122953584 -> 1616122952528 [label=c]
+	1616122953536 -> 1616122953584 [label=b]
+	1616122952432 -> 1616122953536 [label=a]
+	1616122952432 -> 1616122952432 [label=b]
+	1616122953008 -> 1616122952432 [label=b]
+}
