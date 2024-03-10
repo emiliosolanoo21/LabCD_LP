@@ -2,15 +2,8 @@
 digraph {
 	rankdir=LR
 	label="Direct FDA"
-	1616122912096 [label=q0 shape=circle]
-	1616122911904 [label=q1 shape=circle]
-	1616122911664 [label=q2 shape=circle]
-	1616122911520 [label=q3 shape=circle]
-	1616123035952 [label=q4 shape=doublecircle]
-	1616123035952 -> 1616123035952 [label=c]
-	1616122911520 -> 1616123035952 [label=c]
-	1616122911664 -> 1616122911520 [label=b]
-	1616122911904 -> 1616122911664 [label=a]
-	1616122911904 -> 1616122911904 [label=b]
-	1616122912096 -> 1616122911904 [label=b]
+	2417075462688 [label=q0 shape=doublecircle]
+	2417075463408 [label=q1 shape=doublecircle]
+	2417075463408 -> 2417075463408 [label=a]
+	2417075462688 -> 2417075463408 [label=a]
 }

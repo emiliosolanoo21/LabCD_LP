@@ -1,11 +1,14 @@
+from typing import Dict, Any
+
 from Classes_ import Node
 from typing import *
 
 
-def make_tree(expression: str) -> Node:
+def make_tree(expression: List[str or int]) -> Node:
     stack = []
     id_ = 1
-    for char in expression:
+    for elem_ in expression:
+        char = str(elem_)
         if char == '.':
             right = stack.pop()
             left = stack.pop()
@@ -33,17 +36,17 @@ def make_tree(expression: str) -> Node:
             stack[-1].first_pos = left.first_pos
             stack[-1].last_pos = left.last_pos
         else:
-            stack.append(Node(char, id_=id_))
-            stack[-1].is_nullable = char == 'ε'
+            stack.append(Node(elem_, id_=id_))
+            stack[-1].is_nullable = char == str(ord('ε'))
             stack[-1].first_pos.add(id_)
             stack[-1].last_pos.add(id_)
             id_ += 1
     return stack.pop()
 
 
-def make_direct_tree(expression: str) -> Tuple[Node, Dict[str, Node]]:
-    expression = expression + '#.'
-    nodes: Dict[str, Node] = {}
+def make_direct_tree(expression: List[str or int], token='#') -> tuple[Node, dict[Any, Node], Node]:
+    expression = expression + ['#', '.']
+    nodes: Dict[str or int, Node] = {}
     tree_node = make_tree(expression)
 
     def explore_node(node: Node):
@@ -76,4 +79,8 @@ def make_direct_tree(expression: str) -> Tuple[Node, Dict[str, Node]]:
     explore_node(tree_node)
     explore_followPos(tree_node)
 
-    return tree_node, nodes
+    tokenTree = Node(token)
+    tokenTree.left = tree_node
+
+    return tree_node, nodes, tokenTree
+

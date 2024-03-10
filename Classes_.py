@@ -2,9 +2,10 @@ from typing import *
 
 
 class Node:
-    def __init__(self, value: str, left: 'Node' or None = None, right: 'Node' or None = None, id_: int or None = None) \
+    def __init__(self, value: str or int, left: 'Node' or None = None, right: 'Node' or None = None,
+                 id_: int or None = None) \
             -> None:
-        self.value: str = value
+        self.value: str or int = value
         self.left: 'Node' or None = left
         self.right: 'Node' or None = right
         self.id_: int or None = id_
@@ -56,25 +57,40 @@ class FormatPointer:
 
     def plus(self):
         last = self.actual.stack.pop()
-        self.actual.stack.append('('+last+'.'+last+'*)')
+        self.actual.stack.append('(' + last + '.' + last + '*)')
 
     def interrogation(self):
         last = self.actual.stack.pop()
-        self.actual.stack.append("("+last+"|ε)")
+        self.actual.stack.append("(" + last + "|ε)")
 
 
 class State:
     def __init__(self, value: str) -> None:
         self.value: str = value
-        self.transitions: Dict[str, Set['State']] = {}
+        self.transitions: Dict[str or int, Set['State']] = {}
         self.isFinalState: bool = False
+        self.token: Set[str] = set()
+        self.numTrans: int = 0
 
-    def add_transition(self, value: str, state: 'State') -> None:
+    def add_transition(self, value: str or int, state: 'State') -> None:
         if value in self.transitions:
             self.transitions[value].add(state)
         else:
-
             self.transitions[value] = {state}
+
+        self.numTrans += 1
+
+    def combine_States(self, state: 'State') -> None:
+        for transition in state.transitions:
+            if transition in self.transitions:
+                self.transitions[transition] = self.transitions[transition].union(state.transitions[transition])
+            else:
+                self.transitions[transition] = state.transitions[transition]
+
+        if state.isFinalState:
+            self.isFinalState = True
+
+        self.token = self.token.union(state.token)
 
     def getId(self) -> str:
         return str(id(self))
@@ -93,11 +109,11 @@ class State:
         return hash((self.value, id(self)))
 
     def getEpsilonClean(self):
-        states: Set['State'] = self.getStates('ε')
+        states: Set['State'] = self.getStates(ord('ε'))
         not_explorer: Set['State'] = set()
 
         for state in states:
-            not_explorer = not_explorer.union(state.getStates('ε'))
+            not_explorer = not_explorer.union(state.getStates(ord('ε')))
 
         not_explorer = not_explorer - states
 
@@ -106,7 +122,7 @@ class State:
             copy = not_explorer.copy()
             not_explorer = set()
             for state in copy:
-                not_explorer = not_explorer.union(state.getStates('ε'))
+                not_explorer = not_explorer.union(state.getStates(ord('ε')))
             not_explorer = not_explorer - states
 
         return states.union({self})
@@ -115,3 +131,12 @@ class State:
         for transition in self.transitions:
             if state in self.transitions[transition]:
                 self.transitions[transition].remove(state)
+
+    def addToken(self, token: str):
+        self.token.add(token)
+
+    def getToken(self) -> str or None:
+        return str(list(self.token)[0]) if len(self.token) > 0 else None
+
+    def numberTransitions(self) -> int:
+        return self.numTrans

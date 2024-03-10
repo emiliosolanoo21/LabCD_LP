@@ -1,5 +1,4 @@
 from typing import *
-from Classes_ import FormatPointer
 
 
 def is_operator(token):
@@ -30,112 +29,196 @@ def is_binary(token):
     return token in operators
 
 
-def extract_alphabet(content: List[str]) -> List[str]:
+def extract_alphabet(content: List[List[str or int]]) -> List[Set[int]]:
     """Extracts the alphabet from the regular expressions"""
-    alphabet: List[str] = []
+    alphabet: List[Set[int] or None] = []
 
     for expression in content:
-        alphabets = {x for x in expression if x not in '()[]{}|?*ε'}
-        alphabet.append(''.join(alphabets))
-
+        setAlpha = set()
+        for exp_ in expression:
+            if isinstance(exp_, int):
+                if exp_ != ord('ε'):
+                    setAlpha.add(exp_)
+        alphabet.append(setAlpha)
     return alphabet
 
 
-def format_regex(content: List[str]) -> List[str]:
+def format_regex(content: List[List[str or int]]) -> List[List[str or int]]:
     """Formats the regular expressions to be used in the program"""
-    formatted: List[str] = []
+    formatted: List[List[str or int] or None] = []
 
-    def format_(expression_: str) -> str:
-        pointer: FormatPointer = FormatPointer()
-        operators = '*|?+'  # Operators that can be used in the regular expression
+    def format_(expression_: List[str or int]) -> List[str or int]:
+        result = []
+        balance = 0
+        toRecursion = []
 
-        for i in range(len(expression_)):
-            c1 = expression_[i]
-            c2 = "*"
+        if len(expression_) == 0:
+            return []
 
-            if i + 1 < len(expression_):
-                c2 = expression_[i + 1]
+        expression_.append('')
 
-            if c1 in '([{':
-                pointer.inGroup()
-            elif c1 in ')]}':
-                pointer.outGroup()
+        for chIndex in range(len(expression_) - 1):
+            ch = expression_[chIndex]
+            chNext = expression_[chIndex + 1]
+            if str(ch) in '([{':
+                balance += 1
+            elif str(ch) in ')]}':
+                balance -= 1
+                if balance == 0:
+                    toRecursion = toRecursion[1:]
+                    postRecursion = ['('] + format_(toRecursion)
+                    postRecursion.append(')')
+                    result.append(postRecursion)
+                    toRecursion = []
+                    if str(chNext) not in ')]}+|*' and str(chNext) != '' and str(chNext) != '|' and len(result) > 0:
+                        if result[-1] != '.':
+                            result.append('.')
+                elif str(chNext) not in ')]}+|*' and str(chNext) != '' and str(chNext) != '|' and len(result) > 0:
+                    if toRecursion[-1] == '.':
+                        toRecursion.pop()
+                    if toRecursion[-1] == '.':
+                        toRecursion.pop()
+                    if toRecursion[-1] == '.':
+                        toRecursion.pop()
+                    toRecursion.append(')')
+                    toRecursion.append('.')
+                else:
+                    toRecursion.append(ch)
+                continue
 
-            if c1 == '?':
-                pointer.interrogation()
-            elif c1 == '+':
-                pointer.plus()
+            if balance != 0:
+                toRecursion.append(ch)
             else:
-                if c1 not in '([{)]}':
-                    pointer.push(c1)
+                if str(ch) == '*':
+                    last = result.pop()
+                    last = last if last != '.' else result.pop()
+                    last = last if last != '.' else result.pop()
+                    last = last if isinstance(last, list) else [last]
+                    kleen = ['('] + last + ['*', ')']
+                    result.append(kleen)
+                    if isinstance(chNext, int) or str(chNext) in '([{':
+                        result.append('.')
+                elif str(ch) == '+':
+                    last = result.pop()
+                    last = last if last != '.' else result.pop()
+                    last = last if last != '.' else result.pop()
+                    last = last if isinstance(last, list) else [last]
+                    plus = ['('] + last + ['.'] + last + ['*', ')']
+                    result.append(plus)
+                    if isinstance(chNext, int) or str(chNext) in '([{':
+                        result.append('.')
+                elif str(ch) == '?':
+                    last = result.pop()
+                    last = last if last != '.' else result.pop()
+                    last = last if last != '.' else result.pop()
+                    last = last if isinstance(last, list) else [last]
+                    interrogation = ['(', last, '|', ord('ε'), ')']
+                    result.append(interrogation)
+                    if isinstance(chNext, int) or str(chNext) in '([{':
+                        result.append('.')
+                elif str(ch) == '|':
+                    if result[-1] == '|' or result[-1] == '.':
+                        result.pop()
+                    if result[-1] == '.':
+                        result.pop()
+                    result.append('|')
+                else:
+                    result.append(ch)
+                    if (isinstance(chNext, int) or str(chNext) in '([{') and str(chNext) != '|+*])}' and str(ch) != '|':
+                        result.append('.')
 
-            if c1 not in '|' and c2 not in operators and c2 not in ')]}':
+        result = result[:-1] if result[-1] == '.' else result
 
-                if c1 not in '([{':
-                    c = pointer.actual.stack.pop()
-                    pointer.push(c+'.')
+        notListed = []
 
-        result = pointer.__str__()
+        def notListed_(result_):
+            for elem_ in result_:
+                if isinstance(elem_, list):
+                    notListed_(elem_)
+                else:
+                    notListed.append(elem_)
 
-        return result
+        for i in result.copy():
+            if isinstance(i, list):
+                notListed_(i)
+            else:
+                notListed.append(i)
+
+        notListed = notListed if notListed[-1] != '' else notListed[:-1]
+
+        return notListed
 
     for expression in content:
-        exp = expression.replace('[', '(').replace(']', ')')
-        exp = exp.replace('{', '(').replace('}', ')')
-        formatted.append(format_(exp))
-
-    return formatted
-
-
-def translate_to_postfix(content: List[str]) -> List[str]:
-    """Converts regulars expressions from infix to postfix notation whit shutting yard algorithm"""
-    postfix_format: List[str] = []
-
-    def infix_to_postfix(regex):
-        postfix = ""
-        postfix_stack = []
-        escape_char = False
-        formatted_regex = regex
-        completed = False
-
-        for character in formatted_regex:
-            if character == '\\':
-                escape_char = True
-            elif character == ' ':
-                escape_char = True
-            elif character == '[':
-                if not escape_char:
-                    completed = True
-                    postfix += character
-            elif character in '{([':
-                if not escape_char:
-                    postfix_stack.append(character)
-            elif character in '})]':
-                if not escape_char:
-                    while postfix_stack and postfix_stack[-1] != counterSymbol(character):
-                        postfix += postfix_stack.pop()
-                    postfix_stack.pop()  # Eliminar el paréntesis izquierdo '(' de la pila
+        elem = []
+        for element in expression:
+            if isinstance(element, int):
+                elem.append(element)
             else:
-                if (not is_operator(character) and not is_binary(character)) or escape_char or completed:
-                    escape_char = False
-                    postfix += character
+                if element in '([{':
+                    elem.append('(')
+                elif element in ')]}':
+                    elem.append(')')
                 else:
-                    while postfix_stack:
-                        picked_char = postfix_stack[-1]
-                        pd_picked_char = precedence(picked_char)
-                        pd_actual_char = precedence(character)
-                        if pd_picked_char >= pd_actual_char:
-                            postfix += postfix_stack.pop()
-                        else:
-                            break
-                    postfix_stack.append(character)
+                    elem.append(element)
 
-        while postfix_stack:
-            postfix += postfix_stack.pop()
+        new_el = format_(elem)
 
-        return postfix
+        formatted.append(new_el)
+
+    new_formatted = []
+    for elem in formatted:
+        last = ''
+        lastted = ''
+        elem_ = []
+        for ch in elem:
+            if last == '.' and ch == '.' and lastted == '.':
+                elem_.pop()
+                continue
+
+            if last == '|' and ch == '|' and lastted == '|':
+                elem_.pop()
+                continue
+
+            if last == '.' and ch == '.':
+                continue
+
+            if last == '|' and ch == '|':
+                continue
+            lastted = last
+            last = ch
+            elem_.append(ch)
+        new_formatted.append(elem_)
+
+
+    return new_formatted
+
+
+def translate_to_postfix(content: List[List[str]]) -> List[List[str or int]]:
+    """Converts regulars expressions from infix to postfix notation whit shutting yard algorithm"""
+    postfix_format: List[str or int] = []
+
+    def infix_to_postfix(regex: List[str or int]) -> List[str or int]:
+        queue: List[str or int] = []
+        stack: List[str or int] = []
+
+        for token in regex:
+            if token == '(':
+                stack.append(token)
+            elif token == ')':
+                while stack and stack[-1] != '(':
+                    queue.append(stack.pop())
+                stack.pop()
+            elif is_operator(str(token)):
+                while stack and precedence(stack[-1]) >= precedence(token):
+                    queue.append(stack.pop())
+                stack.append(token)
+            else:
+                queue.append(token)
+
+        return queue + stack[::-1]
 
     for expression in content:
         postfix_format.append(infix_to_postfix(expression))
 
     return postfix_format
+
