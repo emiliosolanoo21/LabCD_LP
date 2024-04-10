@@ -19,7 +19,7 @@ def draw_tree(f_node: Node, expression='default', direct=False):
     dot.render('Tree.gv', view=True, directory='./Tree/'+expression+'/'+('Direct' if direct else 'Infix'))
 
 
-def draw_AF(initState: State, legend: str = 'AF', expression='default', direct=False, name='AFN'):
+def draw_AF(initState: State, legend: str = 'AF', expression='default', direct=False, name='AFN', useNum=False):
     dot: 'graphviz.graphs.Digraph' = graphviz.Digraph(comment='AFN')
     dot.attr(rankdir='LR')
     setStates = set()
@@ -27,14 +27,16 @@ def draw_AF(initState: State, legend: str = 'AF', expression='default', direct=F
     dot.attr(label=legend)
 
     def draw_state(state: 'State'):
+        nonlocal useNum
         setStates.add(state.getId())
         dot.node(state.getId(), label=state.value, shape='doublecircle' if state.isFinalState else 'circle')
         for transition in state.transitions:
             for destiny in state.transitions[transition]:
                 if destiny.getId() not in setStates:
                     draw_state(destiny)
-                dot.edge(state.getId(), destiny.getId(), label=transition)
+                label = str(transition) if isinstance(transition, str) or useNum else chr(transition)
+                dot.edge(state.getId(), destiny.getId(), label=label)
 
     draw_state(initState)
 
-    dot.render(name+'.gv', view=True, directory='./Tree/'+expression+'/'+('Direct' if direct else 'Infix'))
+    dot.render(name + '.gv', view=True, directory='./machine/' + expression)

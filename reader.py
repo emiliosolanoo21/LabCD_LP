@@ -166,7 +166,7 @@ def transformsChar(contents: List[str]) -> List[List[str or int]]:
     return transformed
 
 
-def validate(contents: List[List[str or int]]) -> List[List[str or int]]:
+def validate(contents: List[List[str or int]], token:str) -> List[List[str or int]]:
     """Validates the contents of the file are correct expressions"""
     counterparty = {
         '(': ')',
@@ -199,5 +199,8 @@ def validate(contents: List[List[str or int]]) -> List[List[str or int]]:
 
         if len(pila_regex) == 0 and test:
             accepted.append(line)
+        else:
+            raise Exception('Error en la expresión ', token)
+            
 
     return accepted

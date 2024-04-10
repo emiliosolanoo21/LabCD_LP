@@ -161,6 +161,7 @@ def format_regex(content: List[List[str or int]]) -> List[List[str or int]]:
                 else:
                     elem.append(element)
 
+        print(elem)
         new_el = format_(elem)
 
         formatted.append(new_el)
